@@ -60,29 +60,29 @@ const ConfigPanel = ({ config, onConfigUpdate }) => {
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-600 mb-2">
-              Green Maximum: {localConfig.thresholds.green_max} dB
+              Orange Threshold: {localConfig.thresholds.orange_threshold} dB (green if below)
             </label>
             <input
               type="range"
               min="30"
               max="80"
-              value={localConfig.thresholds.green_max}
-              onChange={(e) => handleThresholdChange('green_max', e.target.value)}
-              className="w-full h-2 bg-traffic-green rounded-lg appearance-none cursor-pointer"
+              value={localConfig.thresholds.orange_threshold}
+              onChange={(e) => handleThresholdChange('orange_threshold', e.target.value)}
+              className="w-full h-2 bg-traffic-orange rounded-lg appearance-none cursor-pointer"
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-600 mb-2">
-              Yellow Maximum: {localConfig.thresholds.yellow_max} dB
+              Red Threshold: {localConfig.thresholds.red_threshold} dB (orange if below)
             </label>
             <input
               type="range"
               min="50"
               max="100"
-              value={localConfig.thresholds.yellow_max}
-              onChange={(e) => handleThresholdChange('yellow_max', e.target.value)}
-              className="w-full h-2 bg-traffic-yellow rounded-lg appearance-none cursor-pointer"
+              value={localConfig.thresholds.red_threshold}
+              onChange={(e) => handleThresholdChange('red_threshold', e.target.value)}
+              className="w-full h-2 bg-traffic-red rounded-lg appearance-none cursor-pointer"
             />
           </div>
         </div>

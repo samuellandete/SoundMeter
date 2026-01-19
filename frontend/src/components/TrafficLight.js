@@ -1,11 +1,11 @@
 import React from 'react';
 
 const TrafficLight = ({ decibels, thresholds }) => {
-  const { green_max, yellow_max } = thresholds;
+  const { orange_threshold, red_threshold } = thresholds;
 
   const getColor = () => {
-    if (decibels <= green_max) return 'traffic-green';
-    if (decibels <= yellow_max) return 'traffic-yellow';
+    if (decibels <= orange_threshold) return 'traffic-green';
+    if (decibels <= red_threshold) return 'traffic-orange';
     return 'traffic-red';
   };
 
@@ -37,9 +37,9 @@ const TrafficLight = ({ decibels, thresholds }) => {
 
       {/* Status Text */}
       <div className="mt-4 text-xl text-gray-600">
-        {decibels <= green_max && 'Quiet'}
-        {decibels > green_max && decibels <= yellow_max && 'Moderate'}
-        {decibels > yellow_max && 'Too Loud'}
+        {decibels <= orange_threshold && 'Quiet'}
+        {decibels > orange_threshold && decibels <= red_threshold && 'Moderate'}
+        {decibels > red_threshold && 'Too Loud'}
       </div>
     </div>
   );

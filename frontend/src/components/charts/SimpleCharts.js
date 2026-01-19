@@ -63,7 +63,7 @@ export const AverageBar = ({ logsData, thresholds }) => {
     const avg = slot.total / slot.count;
     labels.push(slot.name);
     averages.push(avg);
-    colors.push(avg <= thresholds.green_max ? '#22c55e' : avg <= thresholds.yellow_max ? '#eab308' : '#ef4444');
+    colors.push(avg <= thresholds.orange_threshold ? '#22c55e' : avg <= thresholds.red_threshold ? '#f97316' : '#ef4444');
   });
 
   const data = { labels, datasets: [{ label: 'Average Decibels', data: averages, backgroundColor: colors }]};
@@ -97,7 +97,7 @@ export const PeakComparison = ({ logsData, thresholds }) => {
   Object.values(slotPeaks).forEach(slot => {
     labels.push(slot.name);
     peaks.push(slot.peak);
-    colors.push(slot.peak <= thresholds.green_max ? '#22c55e' : slot.peak <= thresholds.yellow_max ? '#eab308' : '#ef4444');
+    colors.push(slot.peak <= thresholds.orange_threshold ? '#22c55e' : slot.peak <= thresholds.red_threshold ? '#f97316' : '#ef4444');
   });
 
   const data = { labels, datasets: [{ label: 'Peak Decibels', data: peaks, backgroundColor: colors }]};
@@ -120,24 +120,24 @@ export const ZonePercentage = ({ logsData, thresholds }) => {
   const slotZones = {};
   logsData.forEach(log => {
     if (!slotZones[log.time_slot_id]) {
-      slotZones[log.time_slot_id] = { name: log.slot_name, green: 0, yellow: 0, red: 0, total: 0 };
+      slotZones[log.time_slot_id] = { name: log.slot_name, green: 0, orange: 0, red: 0, total: 0 };
     }
     const slot = slotZones[log.time_slot_id];
     slot.total += 1;
-    if (log.decibels <= thresholds.green_max) slot.green += 1;
-    else if (log.decibels <= thresholds.yellow_max) slot.yellow += 1;
+    if (log.decibels <= thresholds.orange_threshold) slot.green += 1;
+    else if (log.decibels <= thresholds.red_threshold) slot.orange += 1;
     else slot.red += 1;
   });
 
   const labels = [];
   const greenPercentages = [];
-  const yellowPercentages = [];
+  const orangePercentages = [];
   const redPercentages = [];
 
   Object.values(slotZones).forEach(slot => {
     labels.push(slot.name);
     greenPercentages.push((slot.green / slot.total * 100).toFixed(1));
-    yellowPercentages.push((slot.yellow / slot.total * 100).toFixed(1));
+    orangePercentages.push((slot.orange / slot.total * 100).toFixed(1));
     redPercentages.push((slot.red / slot.total * 100).toFixed(1));
   });
 
@@ -145,7 +145,7 @@ export const ZonePercentage = ({ logsData, thresholds }) => {
     labels,
     datasets: [
       { label: 'Quiet (Green)', data: greenPercentages, backgroundColor: '#22c55e' },
-      { label: 'Moderate (Yellow)', data: yellowPercentages, backgroundColor: '#eab308' },
+      { label: 'Moderate (Orange)', data: orangePercentages, backgroundColor: '#f97316' },
       { label: 'Too Loud (Red)', data: redPercentages, backgroundColor: '#ef4444' }
     ]
   };

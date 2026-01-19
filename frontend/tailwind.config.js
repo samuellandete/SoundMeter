@@ -6,7 +6,7 @@ module.exports = {
     extend: {
       colors: {
         'traffic-green': '#22c55e',
-        'traffic-yellow': '#eab308',
+        'traffic-orange': '#f97316',
         'traffic-red': '#ef4444',
       },
     },

@@ -74,7 +74,7 @@ def init_db(db_path='soundmeter.db'):
     cursor.execute('SELECT COUNT(*) FROM config')
     if cursor.fetchone()[0] == 0:
         default_config = {
-            'thresholds': json.dumps({'green_max': 60, 'yellow_max': 80, 'red_min': 80}),
+            'thresholds': json.dumps({'orange_threshold': 60, 'red_threshold': 80}),
             'visual_update_rate': '1000'
         }
         for key, value in default_config.items():
