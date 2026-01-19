@@ -1,0 +1,33 @@
+# Node modules
+frontend/node_modules
+frontend/build
+
+# Python
+backend/venv
+backend/__pycache__
+backend/**/__pycache__
+backend/**/*.pyc
+backend/.pytest_cache
+
+# Database files
+backend/*.db
+backend/*.db-journal
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+
+# Environment
+backend/.env
+frontend/.env
+
+# Documentation
+*.md
+!README.md
+
+# Tests
+backend/tests
