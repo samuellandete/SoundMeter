@@ -11,6 +11,8 @@ CORS(app)
 # Register blueprints
 from routes.config import config_bp
 app.register_blueprint(config_bp)
+from routes.logs import logs_bp
+app.register_blueprint(logs_bp)
 
 @app.route('/health', methods=['GET'])
 def health():
