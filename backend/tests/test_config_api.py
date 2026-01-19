@@ -33,8 +33,8 @@ def test_get_config(client):
     assert 'time_slots' in data
 
     # Check default thresholds
-    assert data['thresholds']['green_max'] == 60
-    assert data['thresholds']['yellow_max'] == 80
+    assert data['thresholds']['orange_threshold'] == 60
+    assert data['thresholds']['red_threshold'] == 80
 
     # Check time slots
     assert len(data['time_slots']) == 4
