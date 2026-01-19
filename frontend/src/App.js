@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import SoundMeter from './components/SoundMeter';
 import ConfigPanel from './components/ConfigPanel';
+import LogsViewer from './components/LogsViewer';
 import { apiService } from './services/api';
 
 function App() {
@@ -103,10 +104,7 @@ function App() {
             <ConfigPanel config={config} onConfigUpdate={handleConfigUpdate} />
           )}
           {activeTab === 'logs' && (
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <h2 className="text-2xl font-bold text-gray-800">Logs Viewer</h2>
-              <p className="text-gray-600 mt-4">Coming soon...</p>
-            </div>
+            <LogsViewer config={config} />
           )}
         </div>
       </div>
