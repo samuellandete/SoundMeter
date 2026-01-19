@@ -12,7 +12,7 @@ from database import init_db
 @pytest.fixture
 def client():
     app.config['TESTING'] = True
-    app.config['DATABASE_PATH'] = 'test_logs.db'
+    os.environ['DATABASE_PATH'] = 'test_logs.db'
 
     init_db('test_logs.db')
 

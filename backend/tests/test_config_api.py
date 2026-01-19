@@ -10,7 +10,7 @@ from database import init_db
 @pytest.fixture
 def client():
     app.config['TESTING'] = True
-    app.config['DATABASE_PATH'] = 'test_api.db'
+    os.environ['DATABASE_PATH'] = 'test_api.db'
 
     # Initialize test database
     init_db('test_api.db')

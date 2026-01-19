@@ -13,6 +13,8 @@ from routes.config import config_bp
 app.register_blueprint(config_bp)
 from routes.logs import logs_bp
 app.register_blueprint(logs_bp)
+from routes.export import export_bp
+app.register_blueprint(export_bp)
 
 @app.route('/health', methods=['GET'])
 def health():
