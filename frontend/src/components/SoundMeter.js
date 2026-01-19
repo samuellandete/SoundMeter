@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAudioLevel } from '../hooks/useAudioLevel';
 import TrafficLight from './TrafficLight';
+import { requestWakeLock, releaseWakeLock } from '../utils/wakeLock';
 
 const SoundMeter = ({ config, onLogSave }) => {
   const { visual_update_rate, thresholds } = config;
@@ -57,6 +58,15 @@ const SoundMeter = ({ config, onLogSave }) => {
 
     return () => clearInterval(countdown);
   }, [isRecording, isInitialized, decibels, onLogSave]);
+
+  // Wake lock to prevent iPad sleep during recording
+  useEffect(() => {
+    if (isRecording) {
+      requestWakeLock();
+    } else {
+      releaseWakeLock();
+    }
+  }, [isRecording]);
 
   return (
     <div className="flex flex-col items-center">
