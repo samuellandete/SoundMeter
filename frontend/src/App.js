@@ -1,38 +1,27 @@
-import React, { useEffect } from 'react';
-import { useAudioLevel } from './hooks/useAudioLevel';
+import React, { useState } from 'react';
+import SoundMeter from './components/SoundMeter';
 
 function App() {
-  const { decibels, isInitialized, error, initialize } = useAudioLevel(1000);
+  const [config] = useState({
+    thresholds: { green_max: 60, yellow_max: 80, red_min: 80 },
+    visual_update_rate: 1000,
+    time_slots: []
+  });
 
-  useEffect(() => {
-    // Auto-initialize on mount
-    initialize();
-  }, []);
+  const handleLogSave = (decibels) => {
+    console.log('Save log:', decibels, 'dB');
+    // TODO: Send to backend
+  };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-8">
-      <h1 className="text-4xl font-bold text-gray-800 mb-8">Sound Meter</h1>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100">
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-5xl font-bold text-gray-800 text-center mb-12">
+          Sound Meter
+        </h1>
 
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          Error: {error}
-        </div>
-      )}
-
-      {!isInitialized && !error && (
-        <button
-          onClick={initialize}
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-        >
-          Start Monitoring
-        </button>
-      )}
-
-      {isInitialized && (
-        <div className="text-6xl font-bold text-gray-800">
-          {decibels.toFixed(1)} dB
-        </div>
-      )}
+        <SoundMeter config={config} onLogSave={handleLogSave} />
+      </div>
     </div>
   );
 }
