@@ -56,9 +56,10 @@ class AudioProcessor {
     }
     const rms = Math.sqrt(sum / this.dataArray.length);
 
-    // Convert to decibels (0-100 range)
-    // Using a logarithmic scale with reference
-    const db = 20 * Math.log10(rms + 0.001) + 100;
+    // Convert to decibels with calibration offset
+    // Note: Web Audio API provides relative values, not calibrated SPL
+    // Offset adjusted so quiet room (~0.01 RMS) reads ~30-40 dB
+    const db = 20 * Math.log10(rms + 0.0001) + 90;
 
     // Clamp between 0 and 120
     return Math.max(0, Math.min(120, db));

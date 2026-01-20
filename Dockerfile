@@ -23,8 +23,9 @@ COPY --from=frontend-build /app/frontend/build ./frontend/build
 WORKDIR /app/backend
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Initialize database with default data
-RUN python init_db.py
+# Copy and setup entrypoint script
+COPY backend/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 # Expose port
 EXPOSE 5000
@@ -38,4 +39,5 @@ ENV TIMEZONE=Europe/Paris
 ENV DATABASE_PATH=soundmeter.db
 
 # Run with Gunicorn (production server)
+ENTRYPOINT ["/entrypoint.sh"]
 CMD ["python", "-m", "gunicorn", "-w", "4", "-b", "0.0.0.0:5000", "app:app"]
