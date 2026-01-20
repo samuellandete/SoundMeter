@@ -4,8 +4,11 @@ import TrafficLight from './TrafficLight';
 import { requestWakeLock, releaseWakeLock } from '../utils/wakeLock';
 
 const SoundMeter = ({ config, onLogSave }) => {
-  const { visual_update_rate, thresholds } = config;
-  const { decibels, isInitialized, error, initialize } = useAudioLevel(visual_update_rate);
+  const { visual_update_rate, thresholds, calibration_offset = 0 } = config;
+  const { decibels: rawDecibels, isInitialized, error, initialize } = useAudioLevel(visual_update_rate);
+
+  // Apply calibration offset to get calibrated decibels
+  const decibels = Math.max(0, Math.min(120, rawDecibels + calibration_offset));
   const [isRecording, setIsRecording] = useState(false);
   const [nextLogIn, setNextLogIn] = useState(30);
 

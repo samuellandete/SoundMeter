@@ -1,10 +1,78 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { apiService } from '../services/api';
+import AudioProcessor from '../utils/audioProcessor';
 
 const ConfigPanel = ({ config, onConfigUpdate }) => {
-  const [localConfig, setLocalConfig] = useState(config);
+  const [localConfig, setLocalConfig] = useState({
+    ...config,
+    calibration_offset: config.calibration_offset || 0
+  });
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
+
+  // Sync localConfig when config prop changes (e.g., after save)
+  useEffect(() => {
+    setLocalConfig(prev => ({
+      ...prev,
+      ...config,
+      // Keep local calibration_offset if it was just set, otherwise use config's value
+      calibration_offset: config.calibration_offset ?? prev.calibration_offset ?? 0
+    }));
+  }, [config]);
+
+  // Calibration state
+  const [isCalibrating, setIsCalibrating] = useState(false);
+  const [currentReading, setCurrentReading] = useState(0);
+  const [targetDb, setTargetDb] = useState(30);
+  const audioProcessorRef = useRef(null);
+  const intervalRef = useRef(null);
+
+  // Start calibration mode - capture live audio
+  const startCalibration = async () => {
+    const processor = new AudioProcessor();
+    const result = await processor.initialize();
+    if (result.success) {
+      audioProcessorRef.current = processor;
+      setIsCalibrating(true);
+      // Update reading every 500ms
+      intervalRef.current = setInterval(() => {
+        const db = processor.getDecibels();
+        setCurrentReading(Math.round(db));
+      }, 500);
+    }
+  };
+
+  // Stop calibration and apply offset
+  const applyCalibration = () => {
+    // Calculate offset: what we want - what we're reading
+    const offset = targetDb - currentReading;
+    console.log('Applying calibration - target:', targetDb, 'current:', currentReading, 'offset:', offset);
+    setLocalConfig(prev => {
+      const newConfig = {
+        ...prev,
+        calibration_offset: offset
+      };
+      console.log('New localConfig after calibration:', newConfig);
+      return newConfig;
+    });
+    stopCalibration();
+  };
+
+  // Cancel calibration
+  const stopCalibration = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+    if (audioProcessorRef.current) {
+      audioProcessorRef.current.stop();
+    }
+    setIsCalibrating(false);
+  };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => stopCalibration();
+  }, []);
 
   const handleThresholdChange = (key, value) => {
     setLocalConfig(prev => ({
@@ -36,10 +104,16 @@ const ConfigPanel = ({ config, onConfigUpdate }) => {
     setIsSaving(true);
     setSaveMessage('');
 
+    console.log('Saving config:', localConfig);
+    console.log('calibration_offset being sent:', localConfig.calibration_offset);
+
     const result = await apiService.updateConfig(localConfig);
+
+    console.log('API response:', result);
 
     if (result.success) {
       setSaveMessage('Configuration saved successfully!');
+      console.log('Returned calibration_offset:', result.data.calibration_offset);
       onConfigUpdate(result.data);
     } else {
       setSaveMessage('Error saving configuration');
@@ -99,6 +173,69 @@ const ConfigPanel = ({ config, onConfigUpdate }) => {
           <option value="500">0.5 seconds (Fast)</option>
           <option value="1000">1 second (Standard)</option>
         </select>
+      </div>
+
+      {/* Microphone Calibration */}
+      <div className="mb-6">
+        <h3 className="text-lg font-semibold text-gray-700 mb-4">Microphone Calibration</h3>
+        <p className="text-sm text-gray-600 mb-4">
+          Current offset: <span className="font-mono font-bold">{localConfig.calibration_offset || 0} dB</span>
+        </p>
+
+        {!isCalibrating ? (
+          <button
+            onClick={startCalibration}
+            className="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+          >
+            Start Calibration
+          </button>
+        ) : (
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+            <p className="text-sm text-gray-600 mb-3">
+              Current raw reading: <span className="font-mono font-bold text-2xl">{currentReading} dB</span>
+            </p>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-600 mb-2">
+                This should actually be:
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min="0"
+                  max="120"
+                  value={targetDb}
+                  onChange={(e) => setTargetDb(parseInt(e.target.value) || 0)}
+                  className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                />
+                <span className="text-gray-600">dB</span>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Quiet room: ~30 dB, Normal conversation: ~60 dB
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={applyCalibration}
+                className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+              >
+                Apply ({targetDb - currentReading > 0 ? '+' : ''}{targetDb - currentReading} dB)
+              </button>
+              <button
+                onClick={stopCalibration}
+                className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        <button
+          onClick={() => setLocalConfig(prev => ({ ...prev, calibration_offset: 0 }))}
+          className="mt-3 text-sm text-gray-500 hover:text-gray-700 underline"
+        >
+          Reset calibration to 0
+        </button>
       </div>
 
       {/* Time Slot Names */}

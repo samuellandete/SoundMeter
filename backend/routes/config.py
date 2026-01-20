@@ -14,14 +14,22 @@ def get_config():
     with get_db_context(get_db_path()) as conn:
         cursor = conn.cursor()
 
-        # Get thresholds and visual update rate
+        # Get thresholds, visual update rate, and calibration offset
         cursor.execute('SELECT key, value FROM config')
-        config_data = {}
-        for row in cursor.fetchall():
+        config_data = {
+            'calibration_offset': 0  # Default value if not in DB
+        }
+        rows = cursor.fetchall()
+        print(f"Config rows from DB: {[(row['key'], row['value']) for row in rows]}")
+        for row in rows:
             if row['key'] == 'thresholds':
                 config_data['thresholds'] = json.loads(row['value'])
             elif row['key'] == 'visual_update_rate':
                 config_data['visual_update_rate'] = int(row['value'])
+            elif row['key'] == 'calibration_offset':
+                print(f"Found calibration_offset in DB: {row['value']}")
+                config_data['calibration_offset'] = float(row['value'])
+        print(f"Returning config_data: {config_data}")
 
         # Get time slots
         cursor.execute('SELECT id, start_time, end_time, name FROM time_slots ORDER BY id')
@@ -62,6 +70,18 @@ def update_config():
                 'UPDATE config SET value = ? WHERE key = ?',
                 (str(data['visual_update_rate']), 'visual_update_rate')
             )
+
+        # Update calibration offset if provided (use INSERT OR REPLACE for new DBs)
+        if 'calibration_offset' in data:
+            print(f"Saving calibration_offset: {data['calibration_offset']}")
+            cursor.execute(
+                'INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)',
+                ('calibration_offset', str(data['calibration_offset']))
+            )
+            # Verify it was saved
+            cursor.execute('SELECT value FROM config WHERE key = ?', ('calibration_offset',))
+            row = cursor.fetchone()
+            print(f"After INSERT, calibration_offset in DB: {row['value'] if row else 'NOT FOUND'}")
 
         # Update time slot names if provided
         if 'time_slots' in data:

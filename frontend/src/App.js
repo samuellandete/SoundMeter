@@ -8,7 +8,8 @@ function App() {
   const [config, setConfig] = useState({
     thresholds: { green_max: 60, yellow_max: 80, red_min: 80 },
     visual_update_rate: 1000,
-    time_slots: []
+    time_slots: [],
+    calibration_offset: 0
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

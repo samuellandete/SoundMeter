@@ -75,10 +75,16 @@ def init_db(db_path='soundmeter.db'):
     if cursor.fetchone()[0] == 0:
         default_config = {
             'thresholds': json.dumps({'orange_threshold': 60, 'red_threshold': 80}),
-            'visual_update_rate': '1000'
+            'visual_update_rate': '1000',
+            'calibration_offset': '0'  # dB offset for microphone calibration
         }
         for key, value in default_config.items():
             cursor.execute('INSERT INTO config (key, value) VALUES (?, ?)', (key, value))
+
+    # Ensure calibration_offset exists (for existing databases)
+    cursor.execute('SELECT COUNT(*) FROM config WHERE key = ?', ('calibration_offset',))
+    if cursor.fetchone()[0] == 0:
+        cursor.execute('INSERT INTO config (key, value) VALUES (?, ?)', ('calibration_offset', '0'))
 
     conn.commit()
     close_db(conn)
