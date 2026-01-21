@@ -76,12 +76,22 @@ def create_log():
                 "message": "Could not determine time slot"
             }), 400
 
+        # Get zone_id (optional)
+        zone_id = data.get('zone_id')
+        if zone_id is not None:
+            zone_id = int(zone_id)
+            if not 1 <= zone_id <= 5:
+                return jsonify({
+                    "success": False,
+                    "message": "zone_id must be between 1 and 5"
+                }), 400
+
         # Save to database
         with get_db_context(get_db_path()) as conn:
             cursor = conn.cursor()
             cursor.execute(
-                'INSERT INTO sound_logs (timestamp, decibels, time_slot_id) VALUES (?, ?, ?)',
-                (timestamp.isoformat(), decibels, time_slot_id)
+                'INSERT INTO sound_logs (timestamp, decibels, time_slot_id, zone_id) VALUES (?, ?, ?, ?)',
+                (timestamp.isoformat(), decibels, time_slot_id, zone_id)
             )
             conn.commit()
 
@@ -92,9 +102,10 @@ def create_log():
 
 @logs_bp.route('/api/logs', methods=['GET'])
 def get_logs():
-    """Get sound logs filtered by date and time slots"""
+    """Get sound logs filtered by date, time slots, and zones"""
     date_str = request.args.get('date')
     slots_str = request.args.get('slots', '1,2,3,4')
+    zones_str = request.args.get('zones')  # Optional: filter by zones
 
     if not date_str:
         return jsonify({"error": "Date parameter required"}), 400
@@ -106,26 +117,58 @@ def get_logs():
         # Parse slots
         slot_ids = [int(s.strip()) for s in slots_str.split(',')]
 
+        # Parse zones if provided
+        zone_ids = None
+        if zones_str:
+            zone_ids = [int(z.strip()) for z in zones_str.split(',')]
+
         # Query database
         with get_db_context(get_db_path()) as conn:
             cursor = conn.cursor()
 
-            placeholders = ','.join('?' * len(slot_ids))
-            query = f'''
-                SELECT
-                    sl.id,
-                    sl.timestamp,
-                    sl.decibels,
-                    sl.time_slot_id,
-                    ts.name as slot_name
-                FROM sound_logs sl
-                JOIN time_slots ts ON sl.time_slot_id = ts.id
-                WHERE DATE(sl.timestamp) = ?
-                AND sl.time_slot_id IN ({placeholders})
-                ORDER BY sl.timestamp
-            '''
+            slot_placeholders = ','.join('?' * len(slot_ids))
+            params = [date.isoformat()] + slot_ids
 
-            cursor.execute(query, [date.isoformat()] + slot_ids)
+            # Build query with optional zone filter
+            if zone_ids:
+                zone_placeholders = ','.join('?' * len(zone_ids))
+                query = f'''
+                    SELECT
+                        sl.id,
+                        sl.timestamp,
+                        sl.decibels,
+                        sl.time_slot_id,
+                        ts.name as slot_name,
+                        sl.zone_id,
+                        z.name as zone_name
+                    FROM sound_logs sl
+                    JOIN time_slots ts ON sl.time_slot_id = ts.id
+                    LEFT JOIN zones z ON sl.zone_id = z.id
+                    WHERE DATE(sl.timestamp) = ?
+                    AND sl.time_slot_id IN ({slot_placeholders})
+                    AND sl.zone_id IN ({zone_placeholders})
+                    ORDER BY sl.timestamp
+                '''
+                params += zone_ids
+            else:
+                query = f'''
+                    SELECT
+                        sl.id,
+                        sl.timestamp,
+                        sl.decibels,
+                        sl.time_slot_id,
+                        ts.name as slot_name,
+                        sl.zone_id,
+                        z.name as zone_name
+                    FROM sound_logs sl
+                    JOIN time_slots ts ON sl.time_slot_id = ts.id
+                    LEFT JOIN zones z ON sl.zone_id = z.id
+                    WHERE DATE(sl.timestamp) = ?
+                    AND sl.time_slot_id IN ({slot_placeholders})
+                    ORDER BY sl.timestamp
+                '''
+
+            cursor.execute(query, params)
 
             logs = []
             for row in cursor.fetchall():
@@ -134,7 +177,9 @@ def get_logs():
                     'timestamp': row['timestamp'],
                     'decibels': row['decibels'],
                     'time_slot_id': row['time_slot_id'],
-                    'slot_name': row['slot_name']
+                    'slot_name': row['slot_name'],
+                    'zone_id': row['zone_id'],
+                    'zone_name': row['zone_name'] or 'Unknown Zone'
                 })
 
         return jsonify(logs), 200

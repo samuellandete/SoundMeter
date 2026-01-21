@@ -44,6 +44,17 @@ def get_config():
 
         config_data['time_slots'] = time_slots
 
+        # Get zones
+        cursor.execute('SELECT id, name FROM zones ORDER BY id')
+        zones = []
+        for row in cursor.fetchall():
+            zones.append({
+                'id': row['id'],
+                'name': row['name']
+            })
+
+        config_data['zones'] = zones
+
     return jsonify(config_data), 200
 
 @config_bp.route('/api/config', methods=['POST'])
@@ -90,6 +101,15 @@ def update_config():
                     cursor.execute(
                         'UPDATE time_slots SET name = ? WHERE id = ?',
                         (slot['name'], slot['id'])
+                    )
+
+        # Update zone names if provided
+        if 'zones' in data:
+            for zone in data['zones']:
+                if 'id' in zone and 'name' in zone:
+                    cursor.execute(
+                        'UPDATE zones SET name = ? WHERE id = ?',
+                        (zone['name'], zone['id'])
                     )
 
         conn.commit()

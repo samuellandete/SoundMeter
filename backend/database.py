@@ -27,6 +27,14 @@ def init_db(db_path='soundmeter.db'):
     conn = get_db(db_path)
     cursor = conn.cursor()
 
+    # Create zones table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS zones (
+            id INTEGER PRIMARY KEY,
+            name TEXT NOT NULL
+        )
+    ''')
+
     # Create time_slots table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS time_slots (
@@ -37,14 +45,16 @@ def init_db(db_path='soundmeter.db'):
         )
     ''')
 
-    # Create sound_logs table
+    # Create sound_logs table with zone_id
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS sound_logs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             timestamp DATETIME NOT NULL,
             decibels REAL NOT NULL,
             time_slot_id INTEGER NOT NULL,
-            FOREIGN KEY (time_slot_id) REFERENCES time_slots(id)
+            zone_id INTEGER,
+            FOREIGN KEY (time_slot_id) REFERENCES time_slots(id),
+            FOREIGN KEY (zone_id) REFERENCES zones(id)
         )
     ''')
 
@@ -55,6 +65,21 @@ def init_db(db_path='soundmeter.db'):
             value TEXT NOT NULL
         )
     ''')
+
+    # Insert default zones
+    cursor.execute('SELECT COUNT(*) FROM zones')
+    if cursor.fetchone()[0] == 0:
+        default_zones = [
+            (1, 'Zone 1'),
+            (2, 'Zone 2'),
+            (3, 'Zone 3'),
+            (4, 'Zone 4'),
+            (5, 'Zone 5')
+        ]
+        cursor.executemany(
+            'INSERT INTO zones (id, name) VALUES (?, ?)',
+            default_zones
+        )
 
     # Insert default time slots
     cursor.execute('SELECT COUNT(*) FROM time_slots')
@@ -69,6 +94,12 @@ def init_db(db_path='soundmeter.db'):
             'INSERT INTO time_slots (id, start_time, end_time, name) VALUES (?, ?, ?, ?)',
             default_slots
         )
+
+    # Migration: Add zone_id column to sound_logs if it doesn't exist
+    cursor.execute("PRAGMA table_info(sound_logs)")
+    columns = [row[1] for row in cursor.fetchall()]
+    if 'zone_id' not in columns:
+        cursor.execute('ALTER TABLE sound_logs ADD COLUMN zone_id INTEGER')
 
     # Insert default config
     cursor.execute('SELECT COUNT(*) FROM config')

@@ -17,6 +17,7 @@ def export_csv():
 
     date_str = request.args.get('date')
     slots_str = request.args.get('slots', '1,2,3,4')
+    zones_str = request.args.get('zones')  # Optional: filter by zones
 
     if not date_str:
         return {"error": "Date parameter required"}, 400
@@ -28,24 +29,51 @@ def export_csv():
         # Parse slots
         slot_ids = [int(s.strip()) for s in slots_str.split(',')]
 
+        # Parse zones if provided
+        zone_ids = None
+        if zones_str:
+            zone_ids = [int(z.strip()) for z in zones_str.split(',')]
+
         # Query database
         with get_db_context(get_db_path()) as conn:
             cursor = conn.cursor()
 
-            placeholders = ','.join('?' * len(slot_ids))
-            query = f'''
-                SELECT
-                    sl.timestamp,
-                    sl.decibels,
-                    ts.name as time_slot_name
-                FROM sound_logs sl
-                JOIN time_slots ts ON sl.time_slot_id = ts.id
-                WHERE DATE(sl.timestamp) = ?
-                AND sl.time_slot_id IN ({placeholders})
-                ORDER BY sl.timestamp
-            '''
+            slot_placeholders = ','.join('?' * len(slot_ids))
+            params = [date.isoformat()] + slot_ids
 
-            cursor.execute(query, [date.isoformat()] + slot_ids)
+            if zone_ids:
+                zone_placeholders = ','.join('?' * len(zone_ids))
+                query = f'''
+                    SELECT
+                        sl.timestamp,
+                        sl.decibels,
+                        ts.name as time_slot_name,
+                        z.name as zone_name
+                    FROM sound_logs sl
+                    JOIN time_slots ts ON sl.time_slot_id = ts.id
+                    LEFT JOIN zones z ON sl.zone_id = z.id
+                    WHERE DATE(sl.timestamp) = ?
+                    AND sl.time_slot_id IN ({slot_placeholders})
+                    AND sl.zone_id IN ({zone_placeholders})
+                    ORDER BY sl.timestamp
+                '''
+                params += zone_ids
+            else:
+                query = f'''
+                    SELECT
+                        sl.timestamp,
+                        sl.decibels,
+                        ts.name as time_slot_name,
+                        z.name as zone_name
+                    FROM sound_logs sl
+                    JOIN time_slots ts ON sl.time_slot_id = ts.id
+                    LEFT JOIN zones z ON sl.zone_id = z.id
+                    WHERE DATE(sl.timestamp) = ?
+                    AND sl.time_slot_id IN ({slot_placeholders})
+                    ORDER BY sl.timestamp
+                '''
+
+            cursor.execute(query, params)
             rows = cursor.fetchall()
 
         # Generate CSV
@@ -53,11 +81,11 @@ def export_csv():
         writer = csv.writer(output)
 
         # Write header
-        writer.writerow(['timestamp', 'decibels', 'time_slot_name'])
+        writer.writerow(['timestamp', 'decibels', 'time_slot_name', 'zone_name'])
 
         # Write data
         for row in rows:
-            writer.writerow([row['timestamp'], row['decibels'], row['time_slot_name']])
+            writer.writerow([row['timestamp'], row['decibels'], row['time_slot_name'], row['zone_name'] or 'Unknown Zone'])
 
         # Create response
         output.seek(0)

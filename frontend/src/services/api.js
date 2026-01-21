@@ -33,13 +33,17 @@ export const apiService = {
   },
 
   // Save sound log
-  saveLog: async (decibels) => {
+  saveLog: async (decibels, zoneId = null) => {
     try {
       const timestamp = new Date().toISOString();
-      const response = await api.post('/api/logs', {
+      const payload = {
         timestamp,
         decibels
-      });
+      };
+      if (zoneId) {
+        payload.zone_id = zoneId;
+      }
+      const response = await api.post('/api/logs', payload);
       return { success: true, data: response.data };
     } catch (error) {
       return { success: false, error: error.message };
@@ -47,10 +51,14 @@ export const apiService = {
   },
 
   // Get logs
-  getLogs: async (date, slots = [1, 2, 3, 4]) => {
+  getLogs: async (date, slots = [1, 2, 3, 4], zones = null) => {
     try {
       const slotsParam = slots.join(',');
-      const response = await api.get(`/api/logs?date=${date}&slots=${slotsParam}`);
+      let url = `/api/logs?date=${date}&slots=${slotsParam}`;
+      if (zones && zones.length > 0) {
+        url += `&zones=${zones.join(',')}`;
+      }
+      const response = await api.get(url);
       return { success: true, data: response.data };
     } catch (error) {
       return { success: false, error: error.message };
@@ -58,17 +66,21 @@ export const apiService = {
   },
 
   // Export CSV
-  exportCSV: async (date, slots = [1, 2, 3, 4]) => {
+  exportCSV: async (date, slots = [1, 2, 3, 4], zones = null) => {
     try {
       const slotsParam = slots.join(',');
-      const response = await api.get(`/api/export?date=${date}&slots=${slotsParam}`, {
+      let url = `/api/export?date=${date}&slots=${slotsParam}`;
+      if (zones && zones.length > 0) {
+        url += `&zones=${zones.join(',')}`;
+      }
+      const response = await api.get(url, {
         responseType: 'blob'
       });
 
       // Create download link
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const url2 = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
-      link.href = url;
+      link.href = url2;
       link.setAttribute('download', `soundmeter_${date}.csv`);
       document.body.appendChild(link);
       link.click();

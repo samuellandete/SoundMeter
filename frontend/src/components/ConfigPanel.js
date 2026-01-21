@@ -93,6 +93,15 @@ const ConfigPanel = ({ config, onConfigUpdate }) => {
     }));
   };
 
+  const handleZoneNameChange = (zoneId, name) => {
+    setLocalConfig(prev => ({
+      ...prev,
+      zones: prev.zones.map(zone =>
+        zone.id === zoneId ? { ...zone, name } : zone
+      )
+    }));
+  };
+
   const handleUpdateRateChange = (rate) => {
     setLocalConfig(prev => ({
       ...prev,
@@ -236,6 +245,28 @@ const ConfigPanel = ({ config, onConfigUpdate }) => {
         >
           Reset calibration to 0
         </button>
+      </div>
+
+      {/* Zone Names */}
+      <div className="mb-6">
+        <h3 className="text-lg font-semibold text-gray-700 mb-4">Zone Names</h3>
+        <p className="text-sm text-gray-500 mb-3">
+          Configure names for the 5 monitoring zones (e.g., location names)
+        </p>
+        <div className="space-y-3">
+          {localConfig.zones?.map(zone => (
+            <div key={zone.id} className="flex items-center gap-3">
+              <span className="text-sm text-gray-600 w-16">Zone {zone.id}</span>
+              <input
+                type="text"
+                value={zone.name}
+                onChange={(e) => handleZoneNameChange(zone.id, e.target.value)}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder={`Zone ${zone.id}`}
+              />
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Time Slot Names */}
