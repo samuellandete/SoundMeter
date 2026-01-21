@@ -88,8 +88,19 @@ function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 flex items-center justify-center">
-        <div className="text-2xl text-gray-600">Loading...</div>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 flex flex-col">
+        <div className="flex-grow flex items-center justify-center">
+          <div className="text-2xl text-gray-600">Loading...</div>
+        </div>
+        <footer className="bg-asv-blue py-4">
+          <div className="container mx-auto px-4 flex justify-center">
+            <img
+              src="https://asvalencia.org/wp-content/svg/logo.png"
+              alt="American School of Valencia"
+              className="h-12"
+            />
+          </div>
+        </footer>
       </div>
     );
   }
@@ -105,8 +116,8 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 flex flex-col">
+      <div className="container mx-auto px-4 py-8 flex-grow">
         <h1 className="text-5xl font-bold text-gray-800 text-center mb-4">
           Sound Meter
         </h1>
@@ -133,7 +144,7 @@ function App() {
             onClick={() => setActiveTab('monitor')}
             className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
               activeTab === 'monitor'
-                ? 'bg-blue-500 text-white'
+                ? 'bg-asv-blue text-white'
                 : 'bg-white text-gray-700 hover:bg-gray-100'
             }`}
           >
@@ -143,7 +154,7 @@ function App() {
             onClick={() => setActiveTab('config')}
             className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
               activeTab === 'config'
-                ? 'bg-blue-500 text-white'
+                ? 'bg-asv-blue text-white'
                 : 'bg-white text-gray-700 hover:bg-gray-100'
             }`}
           >
@@ -153,7 +164,7 @@ function App() {
             onClick={() => setActiveTab('logs')}
             className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
               activeTab === 'logs'
-                ? 'bg-blue-500 text-white'
+                ? 'bg-asv-blue text-white'
                 : 'bg-white text-gray-700 hover:bg-gray-100'
             }`}
           >
@@ -180,6 +191,17 @@ function App() {
           )}
         </div>
       </div>
+
+      {/* Footer with School Logo */}
+      <footer className="bg-asv-blue py-4">
+        <div className="container mx-auto px-4 flex justify-center">
+          <img
+            src="https://asvalencia.org/wp-content/svg/logo.png"
+            alt="American School of Valencia"
+            className="h-12"
+          />
+        </div>
+      </footer>
     </div>
   );
 }
