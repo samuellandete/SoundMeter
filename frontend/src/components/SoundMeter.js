@@ -91,7 +91,15 @@ const SoundMeter = ({ config, onLogSave }) => {
         <div className="mb-6 bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-lg max-w-md">
           <p className="font-bold">Microphone Error</p>
           <p className="text-sm mt-1">{error}</p>
-          <p className="text-xs mt-2">Please enable microphone access in Safari settings</p>
+          {error.includes('HTTPS') ? (
+            <p className="text-xs mt-2">
+              For remote access, configure HTTPS on your server or use a reverse proxy with SSL.
+            </p>
+          ) : (
+            <p className="text-xs mt-2">
+              Please enable microphone access in your browser settings.
+            </p>
+          )}
         </div>
       )}
 

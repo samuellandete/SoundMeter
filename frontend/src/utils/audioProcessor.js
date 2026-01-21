@@ -9,6 +9,23 @@ class AudioProcessor {
 
   async initialize() {
     try {
+      // Check for secure context (HTTPS or localhost)
+      if (!window.isSecureContext) {
+        throw new Error(
+          'Microphone access requires HTTPS. ' +
+          'Please access this site via HTTPS or localhost.'
+        );
+      }
+
+      // Check for mediaDevices API availability
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error(
+          'Microphone API not available. ' +
+          'This may be due to browser restrictions on non-HTTPS sites. ' +
+          'Please use HTTPS or access from localhost.'
+        );
+      }
+
       // Request microphone access
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
