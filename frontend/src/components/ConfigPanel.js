@@ -10,6 +10,11 @@ const ConfigPanel = ({ config, onConfigUpdate }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
 
+  // Storage info state
+  const [storageInfo, setStorageInfo] = useState(null);
+  const [deleteMonths, setDeleteMonths] = useState(13);
+  const [deleteMessage, setDeleteMessage] = useState(null);
+
   // Sync localConfig when config prop changes (e.g., after save)
   useEffect(() => {
     setLocalConfig(prev => ({
@@ -73,6 +78,37 @@ const ConfigPanel = ({ config, onConfigUpdate }) => {
   useEffect(() => {
     return () => stopCalibration();
   }, []);
+
+  // Load storage info on mount and after delete
+  const loadStorageInfo = async () => {
+    const result = await apiService.getStorageInfo();
+    if (result.success) {
+      setStorageInfo(result.data);
+    }
+  };
+
+  useEffect(() => {
+    loadStorageInfo();
+  }, []);
+
+  // Handle delete old logs
+  const handleDeleteOldLogs = async () => {
+    if (!window.confirm(`Are you sure you want to delete all logs older than ${deleteMonths} month(s)? This action cannot be undone.`)) {
+      return;
+    }
+
+    const result = await apiService.deleteOldLogs(deleteMonths);
+    if (result.success) {
+      setDeleteMessage(result.data.message);
+      // Reload storage info to reflect changes
+      loadStorageInfo();
+    } else {
+      setDeleteMessage(`Error: ${result.error}`);
+    }
+
+    // Clear message after 5 seconds
+    setTimeout(() => setDeleteMessage(null), 5000);
+  };
 
   const handleThresholdChange = (key, value) => {
     setLocalConfig(prev => ({
@@ -291,7 +327,7 @@ const ConfigPanel = ({ config, onConfigUpdate }) => {
       </div>
 
       {/* Save Button */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 mb-8">
         <button
           onClick={handleSave}
           disabled={isSaving}
@@ -304,6 +340,62 @@ const ConfigPanel = ({ config, onConfigUpdate }) => {
           <span className={`text-sm font-medium ${saveMessage.includes('Error') ? 'text-red-600' : 'text-green-600'}`}>
             {saveMessage}
           </span>
+        )}
+      </div>
+
+      {/* Storage Info and Data Management */}
+      <div className="border-t border-gray-200 pt-6">
+        <h3 className="text-lg font-semibold text-gray-700 mb-4">Storage & Data Management</h3>
+
+        {/* Storage Info */}
+        {storageInfo && (
+          <div className="bg-gray-50 rounded-lg p-4 mb-4">
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <span className="text-gray-600">Database size:</span>
+                <span className="ml-2 font-mono font-bold">
+                  {storageInfo.database_size_mb < 1
+                    ? `${storageInfo.database_size_bytes} bytes`
+                    : `${storageInfo.database_size_mb} MB`}
+                </span>
+              </div>
+              <div>
+                <span className="text-gray-600">Disk space available:</span>
+                <span className="ml-2 font-mono font-bold">
+                  {storageInfo.disk_free_gb} GB ({storageInfo.disk_free_percent}%)
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Old Logs */}
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="text-sm text-gray-600">Delete logs older than:</label>
+          <select
+            value={deleteMonths}
+            onChange={(e) => setDeleteMonths(parseInt(e.target.value))}
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+          >
+            {[...Array(13)].map((_, i) => (
+              <option key={i + 1} value={i + 1}>
+                {i + 1} month{i + 1 > 1 ? 's' : ''}
+              </option>
+            ))}
+          </select>
+          <button
+            onClick={handleDeleteOldLogs}
+            className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+          >
+            Delete Old Logs
+          </button>
+        </div>
+
+        {/* Delete Message */}
+        {deleteMessage && (
+          <div className={`mt-3 p-3 rounded-lg text-sm ${deleteMessage.startsWith('Error') ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+            {deleteMessage}
+          </div>
         )}
       </div>
     </div>

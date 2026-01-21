@@ -90,5 +90,25 @@ export const apiService = {
     } catch (error) {
       return { success: false, error: error.message };
     }
+  },
+
+  // Delete logs older than specified months
+  deleteOldLogs: async (months = 13) => {
+    try {
+      const response = await api.delete(`/api/logs/old?months=${months}`);
+      return { success: true, data: response.data };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  },
+
+  // Get storage info (database size and disk space)
+  getStorageInfo: async () => {
+    try {
+      const response = await api.get('/api/storage');
+      return { success: true, data: response.data };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
   }
 };

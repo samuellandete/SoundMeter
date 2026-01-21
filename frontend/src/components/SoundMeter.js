@@ -71,6 +71,13 @@ const SoundMeter = ({ config, onLogSave }) => {
     }
   }, [isRecording]);
 
+  // Auto-start monitoring on component mount
+  useEffect(() => {
+    if (!isInitialized && !error) {
+      initialize();
+    }
+  }, []);
+
   return (
     <div className="flex flex-col items-center">
       {/* Recording Status */}
@@ -103,19 +110,11 @@ const SoundMeter = ({ config, onLogSave }) => {
         </div>
       )}
 
-      {/* Start Button */}
-      {!isInitialized && !error && (
-        <button
-          onClick={initialize}
-          className="mb-8 bg-blue-500 hover:bg-blue-600 text-white font-bold py-4 px-8 rounded-lg text-xl shadow-lg transition-colors"
-        >
-          Start Monitoring
-        </button>
-      )}
-
-      {/* Traffic Light Display */}
-      {isInitialized && (
+      {/* Traffic Light Display - shows loading state until initialized */}
+      {isInitialized ? (
         <TrafficLight decibels={decibels} thresholds={thresholds} />
+      ) : !error && (
+        <div className="mb-8 text-gray-500">Initializing microphone...</div>
       )}
     </div>
   );

@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, request
 from datetime import datetime
+from dateutil.relativedelta import relativedelta
 import pytz
 from database import get_db_context
 import os
@@ -186,3 +187,85 @@ def get_logs():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@logs_bp.route('/api/logs/old', methods=['DELETE'])
+def delete_old_logs():
+    """Delete logs older than specified months (default 13)"""
+    try:
+        # Get months parameter (default to 13)
+        months = request.args.get('months', 13, type=int)
+        if months < 1 or months > 13:
+            return jsonify({
+                "success": False,
+                "message": "Months must be between 1 and 13"
+            }), 400
+
+        # Calculate cutoff date
+        cutoff_date = datetime.now() - relativedelta(months=months)
+        cutoff_str = cutoff_date.isoformat()
+
+        with get_db_context(get_db_path()) as conn:
+            cursor = conn.cursor()
+
+            # Count logs to be deleted
+            cursor.execute(
+                'SELECT COUNT(*) as count FROM sound_logs WHERE timestamp < ?',
+                (cutoff_str,)
+            )
+            count = cursor.fetchone()['count']
+
+            if count == 0:
+                return jsonify({
+                    "success": True,
+                    "message": f"No logs older than {months} month(s) found",
+                    "deleted_count": 0
+                }), 200
+
+            # Delete old logs
+            cursor.execute(
+                'DELETE FROM sound_logs WHERE timestamp < ?',
+                (cutoff_str,)
+            )
+            conn.commit()
+
+        return jsonify({
+            "success": True,
+            "message": f"Deleted {count} logs older than {months} month(s)",
+            "deleted_count": count
+        }), 200
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@logs_bp.route('/api/storage', methods=['GET'])
+def get_storage_info():
+    """Get database size and available storage space"""
+    try:
+        import shutil
+
+        db_path = get_db_path()
+
+        # Get database file size
+        if os.path.exists(db_path):
+            db_size_bytes = os.path.getsize(db_path)
+        else:
+            db_size_bytes = 0
+
+        # Get disk usage for the partition containing the database
+        db_dir = os.path.dirname(os.path.abspath(db_path)) or '.'
+        disk_usage = shutil.disk_usage(db_dir)
+
+        return jsonify({
+            "success": True,
+            "database_size_bytes": db_size_bytes,
+            "database_size_mb": round(db_size_bytes / (1024 * 1024), 2),
+            "disk_total_bytes": disk_usage.total,
+            "disk_used_bytes": disk_usage.used,
+            "disk_free_bytes": disk_usage.free,
+            "disk_free_mb": round(disk_usage.free / (1024 * 1024), 2),
+            "disk_free_gb": round(disk_usage.free / (1024 * 1024 * 1024), 2),
+            "disk_free_percent": round((disk_usage.free / disk_usage.total) * 100, 1)
+        }), 200
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500

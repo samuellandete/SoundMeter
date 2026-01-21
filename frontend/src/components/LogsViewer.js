@@ -104,7 +104,7 @@ const LogsViewer = ({ config }) => {
       </div>
 
       {/* Compare Mode Toggle and Export */}
-      <div className="mb-6 flex items-center gap-6">
+      <div className="mb-6 flex flex-wrap items-center gap-4">
         <button
           onClick={handleExport}
           className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-lg transition-colors"
