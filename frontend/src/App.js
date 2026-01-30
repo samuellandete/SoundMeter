@@ -6,6 +6,7 @@ import ZoneSelector from './components/ZoneSelector';
 import { apiService } from './services/api';
 
 const ZONE_STORAGE_KEY = 'soundmeter_selected_zone';
+const DEVICE_MODE_STORAGE_KEY = 'soundmeter_device_mode';
 
 function App() {
   const [config, setConfig] = useState({
@@ -16,6 +17,7 @@ function App() {
     calibration_offset: 0
   });
   const [selectedZone, setSelectedZone] = useState(null);
+  const [deviceMode, setDeviceMode] = useState(null); // 'measuring' or 'dashboard'
   const [showZoneSelector, setShowZoneSelector] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -29,19 +31,26 @@ function App() {
 
         // Check for stored zone selection
         const storedZone = localStorage.getItem(ZONE_STORAGE_KEY);
-        if (storedZone) {
+        const storedMode = localStorage.getItem(DEVICE_MODE_STORAGE_KEY);
+
+        if (storedZone && storedMode) {
           const parsedZone = JSON.parse(storedZone);
           // Verify the zone still exists in config
           const zoneExists = result.data.zones?.find(z => z.id === parsedZone.id);
           if (zoneExists) {
             // Update with potentially new name from config
             setSelectedZone(zoneExists);
+            setDeviceMode(storedMode);
+            // Set appropriate default tab based on mode
+            if (storedMode === 'dashboard') {
+              setActiveTab('logs');
+            }
           } else {
             // Zone no longer exists, show selector
             setShowZoneSelector(true);
           }
         } else {
-          // First time, show zone selector
+          // First time or missing mode, show zone selector
           setShowZoneSelector(true);
         }
       } else {
@@ -68,7 +77,18 @@ function App() {
   const handleZoneSelect = (zone) => {
     setSelectedZone(zone);
     localStorage.setItem(ZONE_STORAGE_KEY, JSON.stringify(zone));
+  };
+
+  const handleDeviceModeSelect = (mode) => {
+    setDeviceMode(mode);
+    localStorage.setItem(DEVICE_MODE_STORAGE_KEY, mode);
     setShowZoneSelector(false);
+    // Set appropriate default tab based on mode
+    if (mode === 'dashboard') {
+      setActiveTab('logs');
+    } else {
+      setActiveTab('monitor');
+    }
   };
 
   const handleChangeZone = () => {
@@ -111,6 +131,7 @@ function App() {
       <ZoneSelector
         zones={config.zones}
         onZoneSelect={handleZoneSelect}
+        onDeviceModeSelect={handleDeviceModeSelect}
       />
     );
   }
@@ -122,12 +143,17 @@ function App() {
           Sound Meter
         </h1>
 
-        {/* Zone Indicator */}
+        {/* Zone and Mode Indicator */}
         {selectedZone && (
           <div className="flex justify-center mb-6">
             <div className="bg-white rounded-lg shadow px-4 py-2 flex items-center gap-3">
               <span className="text-gray-600">Zone:</span>
               <span className="font-semibold text-blue-600">{selectedZone.name}</span>
+              <span className="text-gray-300">|</span>
+              <span className="text-gray-600">Mode:</span>
+              <span className={`font-semibold ${deviceMode === 'measuring' ? 'text-green-600' : 'text-purple-600'}`}>
+                {deviceMode === 'measuring' ? 'Measuring' : 'Dashboard'}
+              </span>
               <button
                 onClick={handleChangeZone}
                 className="text-sm text-gray-500 hover:text-blue-500 underline ml-2"
@@ -140,16 +166,18 @@ function App() {
 
         {/* Tab Navigation */}
         <div className="flex justify-center mb-8 gap-4">
-          <button
-            onClick={() => setActiveTab('monitor')}
-            className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
-              activeTab === 'monitor'
-                ? 'bg-asv-blue text-white'
-                : 'bg-white text-gray-700 hover:bg-gray-100'
-            }`}
-          >
-            Monitor
-          </button>
+          {deviceMode === 'measuring' && (
+            <button
+              onClick={() => setActiveTab('monitor')}
+              className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
+                activeTab === 'monitor'
+                  ? 'bg-asv-blue text-white'
+                  : 'bg-white text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              Monitor
+            </button>
+          )}
           <button
             onClick={() => setActiveTab('config')}
             className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
@@ -180,7 +208,7 @@ function App() {
 
         {/* Tab Content */}
         <div className="flex justify-center">
-          {activeTab === 'monitor' && (
+          {activeTab === 'monitor' && deviceMode === 'measuring' && (
             <SoundMeter config={config} onLogSave={handleLogSave} />
           )}
           {activeTab === 'config' && (

@@ -1,6 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
 
-const ZoneSelector = ({ zones, onZoneSelect }) => {
+const ZoneSelector = ({ zones, onZoneSelect, onDeviceModeSelect, initialStep = 'zone' }) => {
+  const [step, setStep] = useState(initialStep);
+  const [selectedZone, setSelectedZone] = useState(null);
+
+  const handleZoneClick = (zone) => {
+    setSelectedZone(zone);
+    setStep('mode');
+  };
+
+  const handleModeClick = (mode) => {
+    onZoneSelect(selectedZone);
+    onDeviceModeSelect(mode);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 flex flex-col">
       <div className="flex-grow flex items-center justify-center p-4">
@@ -8,25 +21,67 @@ const ZoneSelector = ({ zones, onZoneSelect }) => {
           <h1 className="text-3xl font-bold text-gray-800 text-center mb-2">
             Sound Meter
           </h1>
-          <p className="text-gray-600 text-center mb-8">
-            Select the zone where this device is located
-          </p>
 
-          <div className="space-y-3">
-            {zones.map(zone => (
+          {step === 'zone' && (
+            <>
+              <p className="text-gray-600 text-center mb-8">
+                Select the zone where this device is located
+              </p>
+
+              <div className="space-y-3">
+                {zones.map(zone => (
+                  <button
+                    key={zone.id}
+                    onClick={() => handleZoneClick(zone)}
+                    className="w-full py-4 px-6 bg-asv-blue hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors text-lg shadow-md hover:shadow-lg"
+                  >
+                    {zone.name}
+                  </button>
+                ))}
+              </div>
+
+              <p className="text-sm text-gray-500 text-center mt-6">
+                You can change these settings later
+              </p>
+            </>
+          )}
+
+          {step === 'mode' && (
+            <>
+              <p className="text-gray-600 text-center mb-8">
+                How will this device be used?
+              </p>
+
+              <div className="space-y-4">
+                <button
+                  onClick={() => handleModeClick('measuring')}
+                  className="w-full py-5 px-6 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-colors shadow-md hover:shadow-lg text-left"
+                >
+                  <div className="text-lg mb-1">Measuring Device</div>
+                  <div className="text-sm font-normal opacity-90">
+                    Records sound levels during lunch hours. Requires microphone access.
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => handleModeClick('dashboard')}
+                  className="w-full py-5 px-6 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition-colors shadow-md hover:shadow-lg text-left"
+                >
+                  <div className="text-lg mb-1">Dashboard</div>
+                  <div className="text-sm font-normal opacity-90">
+                    View logs and graphs only. No microphone needed.
+                  </div>
+                </button>
+              </div>
+
               <button
-                key={zone.id}
-                onClick={() => onZoneSelect(zone)}
-                className="w-full py-4 px-6 bg-asv-blue hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors text-lg shadow-md hover:shadow-lg"
+                onClick={() => setStep('zone')}
+                className="w-full mt-6 text-sm text-gray-500 hover:text-blue-500 underline"
               >
-                {zone.name}
+                Back to zone selection
               </button>
-            ))}
-          </div>
-
-          <p className="text-sm text-gray-500 text-center mt-6">
-            You can change the zone later from the main screen
-          </p>
+            </>
+          )}
         </div>
       </div>
 
