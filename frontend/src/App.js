@@ -3,6 +3,7 @@ import SoundMeter from './components/SoundMeter';
 import ConfigPanel from './components/ConfigPanel';
 import LogsViewer from './components/LogsViewer';
 import ZoneSelector from './components/ZoneSelector';
+import TrendsView from './components/TrendsView';
 import { apiService } from './services/api';
 
 const ZONE_STORAGE_KEY = 'soundmeter_selected_zone';
@@ -208,6 +209,16 @@ function App() {
           >
             Logs
           </button>
+          <button
+            onClick={() => setActiveTab('trends')}
+            className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
+              activeTab === 'trends'
+                ? 'bg-asv-blue text-white'
+                : 'bg-white text-gray-700 hover:bg-gray-100'
+            }`}
+          >
+            Trends
+          </button>
         </div>
 
         {error && (
@@ -226,6 +237,9 @@ function App() {
           )}
           {activeTab === 'logs' && (
             <LogsViewer config={config} />
+          )}
+          {activeTab === 'trends' && (
+            <TrendsView config={config} />
           )}
         </div>
       </div>
