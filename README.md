@@ -6,6 +6,12 @@ A web application for monitoring dining hall sound levels with real-time traffic
 
 - **Real-time Sound Monitoring**: Traffic light display (green/yellow/red) based on configurable decibel thresholds
 - **Automated Logging**: Records sound levels every 30 seconds during lunch period (11:30-13:30 CET)
+- **Email Alerts**: Automated notifications when sound levels exceed thresholds
+  - Instant threshold alerts for loud spikes
+  - Rolling average threshold alerts for sustained noise
+  - Configurable cooldown periods to prevent spam
+  - Time slot awareness (no alerts during lunch breaks)
+  - Detailed statistics in email body
 - **iPad Optimized**: PWA with touch-friendly interface and wake lock support
 - **Data Visualization**: Four chart types for analyzing sound patterns
   - Line overlay comparing multiple time periods
@@ -13,7 +19,7 @@ A web application for monitoring dining hall sound levels with real-time traffic
   - Peak noise comparison
   - Traffic light zone percentage breakdown
 - **CSV Export**: Download logs for external analysis
-- **Configurable**: Adjust thresholds, time slot names, and visual update rate
+- **Configurable**: Adjust thresholds, time slot names, visual update rate, and email settings
 
 ## Tech Stack
 
@@ -104,8 +110,15 @@ Frontend will open on `http://localhost:3000`
 
 Navigate to the Configuration tab to:
 - Adjust green/yellow threshold sliders
-- Rename time slot periods
+- Rename time slot periods and zones
 - Change visual update rate (0.5s or 1s)
+- Configure microphone calibration offset
+- Set up email alerts:
+  - Enable/disable email notifications
+  - Configure SMTP server settings
+  - Set instant and average thresholds
+  - Adjust time windows and cooldown periods
+  - Send test emails to verify configuration
 
 ### Viewing Logs
 
@@ -140,6 +153,17 @@ npm test
 ## Deployment
 
 See [DEPLOYMENT.md](DEPLOYMENT.md) for production deployment instructions.
+
+### Upgrading Existing Databases
+
+If upgrading from a version without email alerts, run the migration script:
+
+```bash
+cd backend
+python migrate_email_alerts.py [path/to/soundmeter.db]
+```
+
+The migration script safely adds email configuration to existing databases without affecting existing data.
 
 ## License
 

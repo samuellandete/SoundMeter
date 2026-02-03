@@ -48,13 +48,19 @@ def serve_frontend(path):
     return send_from_directory(frontend_dir, 'index.html')
 ```
 
-5. **Run with production server (Gunicorn)**
+5. **Migrate existing database (if upgrading)**
+```bash
+# If upgrading from version without email alerts
+python migrate_email_alerts.py soundmeter.db
+```
+
+6. **Run with production server (Gunicorn)**
 ```bash
 pip install gunicorn
 gunicorn -w 4 -b 0.0.0.0:5000 app:app
 ```
 
-6. **Setup systemd service for auto-start**
+7. **Setup systemd service for auto-start**
 
 Create `/etc/systemd/system/soundmeter.service`:
 ```ini
@@ -79,7 +85,7 @@ sudo systemctl enable soundmeter
 sudo systemctl start soundmeter
 ```
 
-7. **Access from iPad**
+8. **Access from iPad**
 
 Find Raspberry Pi IP address:
 ```bash
@@ -142,6 +148,26 @@ TIMEZONE=Europe/Paris
 DATABASE_PATH=/path/to/soundmeter.db
 ```
 
+## Email Alerts Configuration
+
+After deployment, configure email alerts via the web interface:
+
+1. Navigate to Configuration tab
+2. Scroll to "Email Alerts" section
+3. Enable email alerts toggle
+4. Configure settings:
+   - **Recipient Email**: Email address to receive alerts
+   - **SMTP Host**: 172.17.50.100 (ASV internal) or external SMTP server
+   - **SMTP Port**: 25 (default) or your SMTP port
+   - **Instant Threshold**: Decibel level for immediate alerts (default: 85 dB)
+   - **Average Threshold**: Rolling average threshold (default: 75 dB)
+   - **Average Window**: Time window for average calculation (default: 5 minutes)
+   - **Cooldown Period**: Minimum time between alerts (default: 5 minutes)
+5. Click "Send Test Email" to verify configuration
+6. Save configuration
+
+See [docs/EMAIL_ALERTS.md](docs/EMAIL_ALERTS.md) for complete documentation.
+
 ## Security Considerations
 
 1. **HTTPS**: Use HTTPS in production (free with Let's Encrypt)
@@ -164,5 +190,11 @@ tail -f /var/log/soundmeter.log
 ### Update Application
 ```bash
 git pull
-systemctl restart soundmeter
+
+# If database schema changed, run migrations
+cd backend
+python migrate_email_alerts.py
+
+# Restart service
+sudo systemctl restart soundmeter
 ```
