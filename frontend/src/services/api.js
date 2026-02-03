@@ -110,5 +110,22 @@ export const apiService = {
     } catch (error) {
       return { success: false, error: error.message };
     }
+  },
+
+  // Get trends data
+  getTrends: async (granularity, startDate, endDate, slots = null, zones = null) => {
+    try {
+      let url = `/api/trends?granularity=${granularity}&start_date=${startDate}&end_date=${endDate}`;
+      if (slots && slots.length > 0) {
+        url += `&slots=${slots.join(',')}`;
+      }
+      if (zones && zones.length > 0) {
+        url += `&zones=${zones.join(',')}`;
+      }
+      const response = await api.get(url);
+      return { success: true, data: response.data };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
   }
 };
