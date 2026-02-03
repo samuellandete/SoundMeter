@@ -1,16 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAudioLevel } from '../hooks/useAudioLevel';
+import { useEmailAlerts } from '../hooks/useEmailAlerts';
 import TrafficLight from './TrafficLight';
 import { requestWakeLock, releaseWakeLock } from '../utils/wakeLock';
 
 const SoundMeter = ({ config, onLogSave }) => {
-  const { visual_update_rate, thresholds, calibration_offset = 0 } = config;
+  const { visual_update_rate, thresholds, calibration_offset = 0, time_slots = [] } = config;
   const { decibels: rawDecibels, isInitialized, error, initialize } = useAudioLevel(visual_update_rate);
+  const { checkThresholds } = useEmailAlerts();
 
   // Apply calibration offset to get calibrated decibels
   const decibels = Math.max(0, Math.min(120, rawDecibels + calibration_offset));
   const [isRecording, setIsRecording] = useState(false);
   const [nextLogIn, setNextLogIn] = useState(30);
+  const lastThresholdCheckRef = useRef(null);
 
   // Check if within recording hours (11:30-13:30 CET)
   const isWithinRecordingHours = () => {
@@ -53,6 +56,26 @@ const SoundMeter = ({ config, onLogSave }) => {
           if (onLogSave && isInitialized) {
             onLogSave(decibels);
           }
+
+          // Check email alert thresholds every time we log
+          if (config.email_alerts?.enabled && time_slots.length > 0) {
+            checkThresholds(decibels, config, time_slots)
+              .then(result => {
+                if (result.checked) {
+                  // Log alert results for debugging (optional)
+                  if (result.instantCheck?.triggered) {
+                    console.log('Instant threshold alert:', result.instantCheck);
+                  }
+                  if (result.averageCheck?.triggered) {
+                    console.log('Average threshold alert:', result.averageCheck);
+                  }
+                }
+              })
+              .catch(err => {
+                console.error('Error checking email thresholds:', err);
+              });
+          }
+
           return 30;
         }
         return prev - 1;
@@ -60,7 +83,7 @@ const SoundMeter = ({ config, onLogSave }) => {
     }, 1000);
 
     return () => clearInterval(countdown);
-  }, [isRecording, isInitialized, decibels, onLogSave]);
+  }, [isRecording, isInitialized, decibels, onLogSave, config, time_slots, checkThresholds]);
 
   // Wake lock to prevent iPad sleep during recording
   useEffect(() => {

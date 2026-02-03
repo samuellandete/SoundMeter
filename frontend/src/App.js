@@ -14,7 +14,17 @@ function App() {
     visual_update_rate: 1000,
     time_slots: [],
     zones: [],
-    calibration_offset: 0
+    calibration_offset: 0,
+    email_alerts: {
+      enabled: false,
+      recipient: '',
+      smtp_host: '',
+      smtp_port: 25,
+      instant_threshold_db: 85.0,
+      average_threshold_db: 75.0,
+      average_time_window_minutes: 5,
+      cooldown_minutes: 5
+    }
   });
   const [selectedZone, setSelectedZone] = useState(null);
   const [deviceMode, setDeviceMode] = useState(null); // 'measuring' or 'dashboard'
