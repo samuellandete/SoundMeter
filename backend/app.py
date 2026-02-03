@@ -15,6 +15,8 @@ from routes.logs import logs_bp
 app.register_blueprint(logs_bp)
 from routes.export import export_bp
 app.register_blueprint(export_bp)
+from routes.email_alerts import email_alerts_bp
+app.register_blueprint(email_alerts_bp)
 
 @app.route('/health', methods=['GET'])
 def health():
