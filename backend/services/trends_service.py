@@ -1,6 +1,5 @@
 from database import get_db_context
 from datetime import datetime, timedelta
-from dateutil.relativedelta import relativedelta
 import os
 import json
 
@@ -92,9 +91,9 @@ def aggregate_period(start_date, end_date, thresholds, slot_ids=None, zone_ids=N
                 AVG(sl.decibels) as avg_db,
                 MAX(sl.decibels) as peak_db,
                 COUNT(*) as total,
-                SUM(CASE WHEN sl.decibels < ? THEN 1 ELSE 0 END) as green_count,
-                SUM(CASE WHEN sl.decibels >= ? AND sl.decibels < ? THEN 1 ELSE 0 END) as orange_count,
-                SUM(CASE WHEN sl.decibels >= ? THEN 1 ELSE 0 END) as red_count
+                SUM(CASE WHEN sl.decibels <= ? THEN 1 ELSE 0 END) as green_count,
+                SUM(CASE WHEN sl.decibels > ? AND sl.decibels <= ? THEN 1 ELSE 0 END) as orange_count,
+                SUM(CASE WHEN sl.decibels > ? THEN 1 ELSE 0 END) as red_count
             FROM sound_logs sl
             JOIN time_slots ts ON sl.time_slot_id = ts.id
             LEFT JOIN zones z ON sl.zone_id = z.id
