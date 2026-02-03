@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { apiService } from '../services/api';
 import AudioProcessor from '../utils/audioProcessor';
+import EmailConfigPanel from './EmailConfigPanel';
 
 const ConfigPanel = ({ config, onConfigUpdate }) => {
   const [localConfig, setLocalConfig] = useState({
@@ -142,6 +143,13 @@ const ConfigPanel = ({ config, onConfigUpdate }) => {
     setLocalConfig(prev => ({
       ...prev,
       visual_update_rate: parseInt(rate)
+    }));
+  };
+
+  const handleEmailConfigChange = (emailConfig) => {
+    setLocalConfig(prev => ({
+      ...prev,
+      email_alerts: emailConfig
     }));
   };
 
@@ -325,6 +333,14 @@ const ConfigPanel = ({ config, onConfigUpdate }) => {
           ))}
         </div>
       </div>
+
+      {/* Email Configuration */}
+      {localConfig.email_alerts && (
+        <EmailConfigPanel
+          emailConfig={localConfig.email_alerts}
+          onChange={handleEmailConfigChange}
+        />
+      )}
 
       {/* Save Button */}
       <div className="flex items-center gap-4 mb-8">
