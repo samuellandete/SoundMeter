@@ -107,7 +107,18 @@ def init_db(db_path='soundmeter.db'):
         default_config = {
             'thresholds': json.dumps({'orange_threshold': 60, 'red_threshold': 80}),
             'visual_update_rate': '1000',
-            'calibration_offset': '0'  # dB offset for microphone calibration
+            'calibration_offset': '0',  # dB offset for microphone calibration
+            # Email alert settings
+            'email_enabled': 'false',
+            'email_recipient': 'richardalbinana@asvalencia.org',
+            'smtp_host': '172.17.50.100',
+            'smtp_port': '25',
+            'instant_threshold_db': '85.0',
+            'average_threshold_db': '75.0',
+            'average_time_window_minutes': '5',
+            'cooldown_minutes': '5',
+            'last_instant_alert_sent': '',
+            'last_average_alert_sent': ''
         }
         for key, value in default_config.items():
             cursor.execute('INSERT INTO config (key, value) VALUES (?, ?)', (key, value))

@@ -34,3 +34,70 @@ def test_database_initialization():
 
     close_db(conn)
     os.remove(db_path)
+
+def test_email_config_defaults():
+    """Test that email configuration is initialized with defaults"""
+    import os
+    import tempfile
+    from database import init_db, get_db_context
+
+    # Create temporary database
+    fd, db_path = tempfile.mkstemp()
+    os.close(fd)
+
+    try:
+        init_db(db_path)
+
+        with get_db_context(db_path) as conn:
+            cursor = conn.cursor()
+
+            # Check email_enabled exists
+            cursor.execute("SELECT value FROM config WHERE key = 'email_enabled'")
+            result = cursor.fetchone()
+            assert result is not None
+            assert result['value'] == 'false'
+
+            # Check email_recipient exists
+            cursor.execute("SELECT value FROM config WHERE key = 'email_recipient'")
+            result = cursor.fetchone()
+            assert result is not None
+            assert result['value'] == 'richardalbinana@asvalencia.org'
+
+            # Check smtp_host exists
+            cursor.execute("SELECT value FROM config WHERE key = 'smtp_host'")
+            result = cursor.fetchone()
+            assert result is not None
+            assert result['value'] == '172.17.50.100'
+
+            # Check smtp_port exists
+            cursor.execute("SELECT value FROM config WHERE key = 'smtp_port'")
+            result = cursor.fetchone()
+            assert result is not None
+            assert result['value'] == '25'
+
+            # Check instant_threshold_db exists
+            cursor.execute("SELECT value FROM config WHERE key = 'instant_threshold_db'")
+            result = cursor.fetchone()
+            assert result is not None
+            assert float(result['value']) == 85.0
+
+            # Check average_threshold_db exists
+            cursor.execute("SELECT value FROM config WHERE key = 'average_threshold_db'")
+            result = cursor.fetchone()
+            assert result is not None
+            assert float(result['value']) == 75.0
+
+            # Check average_time_window_minutes exists
+            cursor.execute("SELECT value FROM config WHERE key = 'average_time_window_minutes'")
+            result = cursor.fetchone()
+            assert result is not None
+            assert int(result['value']) == 5
+
+            # Check cooldown_minutes exists
+            cursor.execute("SELECT value FROM config WHERE key = 'cooldown_minutes'")
+            result = cursor.fetchone()
+            assert result is not None
+            assert int(result['value']) == 5
+
+    finally:
+        os.unlink(db_path)
