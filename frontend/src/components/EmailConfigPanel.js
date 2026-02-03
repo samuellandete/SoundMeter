@@ -122,7 +122,7 @@ const EmailConfigPanel = ({ emailConfig, onChange }) => {
             <input
               type="range"
               min="70"
-              max="100"
+              max="130"
               step="0.5"
               value={emailConfig.instant_threshold_db}
               onChange={(e) => handleChange('instant_threshold_db', parseFloat(e.target.value))}
@@ -139,7 +139,7 @@ const EmailConfigPanel = ({ emailConfig, onChange }) => {
             <input
               type="range"
               min="60"
-              max="90"
+              max="130"
               step="0.5"
               value={emailConfig.average_threshold_db}
               onChange={(e) => handleChange('average_threshold_db', parseFloat(e.target.value))}

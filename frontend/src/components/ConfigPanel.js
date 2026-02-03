@@ -192,7 +192,7 @@ const ConfigPanel = ({ config, onConfigUpdate }) => {
             <input
               type="range"
               min="30"
-              max="80"
+              max="130"
               value={localConfig.thresholds.orange_threshold}
               onChange={(e) => handleThresholdChange('orange_threshold', e.target.value)}
               className="w-full h-2 bg-traffic-orange rounded-lg appearance-none cursor-pointer"
@@ -206,7 +206,7 @@ const ConfigPanel = ({ config, onConfigUpdate }) => {
             <input
               type="range"
               min="50"
-              max="100"
+              max="130"
               value={localConfig.thresholds.red_threshold}
               onChange={(e) => handleThresholdChange('red_threshold', e.target.value)}
               className="w-full h-2 bg-traffic-red rounded-lg appearance-none cursor-pointer"
