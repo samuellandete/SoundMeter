@@ -20,8 +20,8 @@ function App() {
       recipient: '',
       smtp_host: '',
       smtp_port: 25,
-      instant_threshold_db: 85.0,
-      average_threshold_db: 75.0,
+      instant_threshold_db: 100.0,
+      average_threshold_db: 90.0,
       average_time_window_minutes: 5,
       cooldown_minutes: 5
     }

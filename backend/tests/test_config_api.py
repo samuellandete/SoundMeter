@@ -63,8 +63,8 @@ def test_get_config_includes_email_alerts(client):
     assert email_config['recipient'] == 'richardalbinana@asvalencia.org'
     assert email_config['smtp_host'] == '172.17.50.100'
     assert email_config['smtp_port'] == 25
-    assert email_config['instant_threshold_db'] == 85.0
-    assert email_config['average_threshold_db'] == 75.0
+    assert email_config['instant_threshold_db'] == 100.0
+    assert email_config['average_threshold_db'] == 90.0
     assert email_config['average_time_window_minutes'] == 5
     assert email_config['cooldown_minutes'] == 5
 

@@ -142,8 +142,8 @@ The system is pre-configured for the ASV internal SMTP server:
 For external SMTP servers, configure in the Email Configuration panel.
 
 ### Default Thresholds
-- **Instant Threshold**: 85.0 dB
-- **Average Threshold**: 75.0 dB
+- **Instant Threshold**: 100.0 dB
+- **Average Threshold**: 90.0 dB
 - **Average Window**: 5 minutes
 - **Cooldown Period**: 5 minutes
 

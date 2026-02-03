@@ -42,6 +42,9 @@ const EmailConfigPanel = ({ emailConfig, onChange }) => {
 
   return (
     <div className="mb-6">
+      {/* Separator line */}
+      <div className="border-t border-gray-200 mb-6"></div>
+
       <h3 className="text-lg font-semibold text-gray-700 mb-4">Email Alerts</h3>
       <p className="text-sm text-gray-500 mb-4">
         Configure automated email notifications when sound thresholds are exceeded
@@ -152,24 +155,6 @@ const EmailConfigPanel = ({ emailConfig, onChange }) => {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-600 mb-2">
-              Average Time Window
-            </label>
-            <select
-              value={emailConfig.average_time_window_minutes}
-              onChange={(e) => handleChange('average_time_window_minutes', parseInt(e.target.value))}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="3">3 minutes</option>
-              <option value="5">5 minutes</option>
-              <option value="10">10 minutes</option>
-              <option value="15">15 minutes</option>
-            </select>
-            <p className="text-xs text-gray-500 mt-1">
-              Rolling window for average calculation
-            </p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-600 mb-2">
               Cooldown Period
             </label>
             <select
@@ -184,6 +169,24 @@ const EmailConfigPanel = ({ emailConfig, onChange }) => {
             </select>
             <p className="text-xs text-gray-500 mt-1">
               Minimum time between alerts of same type
+            </p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-2">
+              Average Time Window
+            </label>
+            <select
+              value={emailConfig.average_time_window_minutes}
+              onChange={(e) => handleChange('average_time_window_minutes', parseInt(e.target.value))}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="3">3 minutes</option>
+              <option value="5">5 minutes</option>
+              <option value="10">10 minutes</option>
+              <option value="15">15 minutes</option>
+            </select>
+            <p className="text-xs text-gray-500 mt-1">
+              Rolling window for average calculation
             </p>
           </div>
         </div>

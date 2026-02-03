@@ -79,13 +79,13 @@ def test_email_config_defaults():
             cursor.execute("SELECT value FROM config WHERE key = 'instant_threshold_db'")
             result = cursor.fetchone()
             assert result is not None
-            assert float(result['value']) == 85.0
+            assert float(result['value']) == 100.0
 
             # Check average_threshold_db exists
             cursor.execute("SELECT value FROM config WHERE key = 'average_threshold_db'")
             result = cursor.fetchone()
             assert result is not None
-            assert float(result['value']) == 75.0
+            assert float(result['value']) == 90.0
 
             # Check average_time_window_minutes exists
             cursor.execute("SELECT value FROM config WHERE key = 'average_time_window_minutes'")
