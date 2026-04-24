@@ -3,28 +3,44 @@ import { apiService } from '../services/api';
 import AudioProcessor from '../utils/audioProcessor';
 import EmailConfigPanel from './EmailConfigPanel';
 
+const CALIBRATION_KEY = (zoneId) => `soundmeter_calibration_zone_${zoneId}`;
+
 const ConfigPanel = ({ config, onConfigUpdate }) => {
-  const [localConfig, setLocalConfig] = useState({
-    ...config,
-    calibration_offset: config.calibration_offset || 0
-  });
+  const [localConfig, setLocalConfig] = useState({ ...config });
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
+
+  // Per-zone calibration (stored in localStorage on each measuring device)
+  const [calibrationZoneId, setCalibrationZoneId] = useState(null);
+  const [calibrationValue, setCalibrationValue] = useState(0);
 
   // Storage info state
   const [storageInfo, setStorageInfo] = useState(null);
   const [deleteMonths, setDeleteMonths] = useState(13);
   const [deleteMessage, setDeleteMessage] = useState(null);
 
-  // Sync localConfig when config prop changes (e.g., after save)
+  // Sync localConfig when config prop changes
   useEffect(() => {
-    setLocalConfig(prev => ({
-      ...prev,
-      ...config,
-      // Keep local calibration_offset if it was just set, otherwise use config's value
-      calibration_offset: config.calibration_offset ?? prev.calibration_offset ?? 0
-    }));
+    const { calibration_offset: _ignored, ...rest } = config;
+    setLocalConfig(prev => ({ ...prev, ...rest }));
   }, [config]);
+
+  // Initialize calibration zone to first available zone
+  useEffect(() => {
+    if (localConfig.zones?.length > 0 && calibrationZoneId === null) {
+      const firstId = localConfig.zones[0].id;
+      setCalibrationZoneId(firstId);
+      const stored = localStorage.getItem(CALIBRATION_KEY(firstId));
+      setCalibrationValue(stored !== null ? parseFloat(stored) : 0);
+    }
+  }, [localConfig.zones, calibrationZoneId]);
+
+  const handleCalibrationZoneChange = (zoneId) => {
+    const id = Number(zoneId);
+    setCalibrationZoneId(id);
+    const stored = localStorage.getItem(CALIBRATION_KEY(id));
+    setCalibrationValue(stored !== null ? parseFloat(stored) : 0);
+  };
 
   // Calibration state
   const [isCalibrating, setIsCalibrating] = useState(false);
@@ -48,19 +64,13 @@ const ConfigPanel = ({ config, onConfigUpdate }) => {
     }
   };
 
-  // Stop calibration and apply offset
+  // Stop calibration and apply offset — stored per zone in localStorage
   const applyCalibration = () => {
-    // Calculate offset: what we want - what we're reading
     const offset = targetDb - currentReading;
-    console.log('Applying calibration - target:', targetDb, 'current:', currentReading, 'offset:', offset);
-    setLocalConfig(prev => {
-      const newConfig = {
-        ...prev,
-        calibration_offset: offset
-      };
-      console.log('New localConfig after calibration:', newConfig);
-      return newConfig;
-    });
+    if (calibrationZoneId !== null) {
+      localStorage.setItem(CALIBRATION_KEY(calibrationZoneId), offset.toString());
+    }
+    setCalibrationValue(offset);
     stopCalibration();
   };
 
@@ -156,22 +166,15 @@ const ConfigPanel = ({ config, onConfigUpdate }) => {
   const handleSave = async () => {
     setIsSaving(true);
     setSaveMessage('');
-
-    console.log('Saving config:', localConfig);
-    console.log('calibration_offset being sent:', localConfig.calibration_offset);
-
-    const result = await apiService.updateConfig(localConfig);
-
-    console.log('API response:', result);
-
+    // calibration is stored locally per zone — never sent to the backend
+    const { calibration_offset: _omit, ...configToSave } = localConfig;
+    const result = await apiService.updateConfig(configToSave);
     if (result.success) {
       setSaveMessage('Configuration saved successfully!');
-      console.log('Returned calibration_offset:', result.data.calibration_offset);
       onConfigUpdate(result.data);
     } else {
       setSaveMessage('Error saving configuration');
     }
-
     setIsSaving(false);
     setTimeout(() => setSaveMessage(''), 3000);
   };
@@ -228,11 +231,28 @@ const ConfigPanel = ({ config, onConfigUpdate }) => {
         </select>
       </div>
 
-      {/* Microphone Calibration */}
+      {/* Microphone Calibration — stored locally per zone on each measuring device */}
       <div className="mb-6">
         <h3 className="text-lg font-semibold text-gray-700 mb-4">Microphone Calibration</h3>
+        <p className="text-xs text-gray-500 mb-3">
+          Calibration is stored on this device per zone. Set it on each measuring iPad individually.
+        </p>
+
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-600 mb-1">Zone to calibrate</label>
+          <select
+            value={calibrationZoneId || ''}
+            onChange={(e) => handleCalibrationZoneChange(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+          >
+            {localConfig.zones?.map(z => (
+              <option key={z.id} value={z.id}>{z.name}</option>
+            ))}
+          </select>
+        </div>
+
         <p className="text-sm text-gray-600 mb-4">
-          Current offset: <span className="font-mono font-bold">{localConfig.calibration_offset || 0} dB</span>
+          Current offset: <span className="font-mono font-bold">{calibrationValue} dB</span>
         </p>
 
         {!isCalibrating ? (
@@ -284,7 +304,12 @@ const ConfigPanel = ({ config, onConfigUpdate }) => {
         )}
 
         <button
-          onClick={() => setLocalConfig(prev => ({ ...prev, calibration_offset: 0 }))}
+          onClick={() => {
+            if (calibrationZoneId !== null) {
+              localStorage.setItem(CALIBRATION_KEY(calibrationZoneId), '0');
+              setCalibrationValue(0);
+            }
+          }}
           className="mt-3 text-sm text-gray-500 hover:text-gray-700 underline"
         >
           Reset calibration to 0

@@ -1,17 +1,20 @@
 import React, { useState } from 'react';
 
-const ZoneSelector = ({ zones, onZoneSelect, onDeviceModeSelect, initialStep = 'zone' }) => {
-  const [step, setStep] = useState(initialStep);
-  const [selectedZone, setSelectedZone] = useState(null);
-
-  const handleZoneClick = (zone) => {
-    setSelectedZone(zone);
-    setStep('mode');
-  };
+const ZoneSelector = ({ zones, onZoneSelect, onDeviceModeSelect }) => {
+  const [step, setStep] = useState('mode');
 
   const handleModeClick = (mode) => {
-    onZoneSelect(selectedZone);
-    onDeviceModeSelect(mode);
+    if (mode === 'dashboard') {
+      onZoneSelect(null);
+      onDeviceModeSelect('dashboard');
+    } else {
+      setStep('zone');
+    }
+  };
+
+  const handleZoneClick = (zone) => {
+    onZoneSelect(zone);
+    onDeviceModeSelect('measuring');
   };
 
   return (
@@ -22,12 +25,42 @@ const ZoneSelector = ({ zones, onZoneSelect, onDeviceModeSelect, initialStep = '
             Sound Meter
           </h1>
 
+          {step === 'mode' && (
+            <>
+              <p className="text-gray-600 text-center mb-8">
+                How will this device be used?
+              </p>
+              <div className="space-y-4">
+                <button
+                  onClick={() => handleModeClick('measuring')}
+                  className="w-full py-5 px-6 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-colors shadow-md hover:shadow-lg text-left"
+                >
+                  <div className="text-lg mb-1">Measuring Device</div>
+                  <div className="text-sm font-normal opacity-90">
+                    Records sound levels during lunch hours. Requires microphone access.
+                  </div>
+                </button>
+                <button
+                  onClick={() => handleModeClick('dashboard')}
+                  className="w-full py-5 px-6 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition-colors shadow-md hover:shadow-lg text-left"
+                >
+                  <div className="text-lg mb-1">Dashboard</div>
+                  <div className="text-sm font-normal opacity-90">
+                    View logs and graphs only. No microphone needed.
+                  </div>
+                </button>
+              </div>
+              <p className="text-sm text-gray-500 text-center mt-6">
+                You can change these settings later
+              </p>
+            </>
+          )}
+
           {step === 'zone' && (
             <>
               <p className="text-gray-600 text-center mb-8">
                 Select the zone where this device is located
               </p>
-
               <div className="space-y-3">
                 {zones.map(zone => (
                   <button
@@ -39,53 +72,17 @@ const ZoneSelector = ({ zones, onZoneSelect, onDeviceModeSelect, initialStep = '
                   </button>
                 ))}
               </div>
-
-              <p className="text-sm text-gray-500 text-center mt-6">
-                You can change these settings later
-              </p>
-            </>
-          )}
-
-          {step === 'mode' && (
-            <>
-              <p className="text-gray-600 text-center mb-8">
-                How will this device be used?
-              </p>
-
-              <div className="space-y-4">
-                <button
-                  onClick={() => handleModeClick('measuring')}
-                  className="w-full py-5 px-6 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-colors shadow-md hover:shadow-lg text-left"
-                >
-                  <div className="text-lg mb-1">Measuring Device</div>
-                  <div className="text-sm font-normal opacity-90">
-                    Records sound levels during lunch hours. Requires microphone access.
-                  </div>
-                </button>
-
-                <button
-                  onClick={() => handleModeClick('dashboard')}
-                  className="w-full py-5 px-6 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition-colors shadow-md hover:shadow-lg text-left"
-                >
-                  <div className="text-lg mb-1">Dashboard</div>
-                  <div className="text-sm font-normal opacity-90">
-                    View logs and graphs only. No microphone needed.
-                  </div>
-                </button>
-              </div>
-
               <button
-                onClick={() => setStep('zone')}
+                onClick={() => setStep('mode')}
                 className="w-full mt-6 text-sm text-gray-500 hover:text-blue-500 underline"
               >
-                Back to zone selection
+                Back to mode selection
               </button>
             </>
           )}
         </div>
       </div>
 
-      {/* Footer with School Logo */}
       <footer className="bg-asv-blue py-4">
         <div className="container mx-auto px-4 flex justify-center">
           <img

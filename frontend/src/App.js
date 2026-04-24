@@ -15,7 +15,6 @@ function App() {
     visual_update_rate: 1000,
     time_slots: [],
     zones: [],
-    calibration_offset: 0,
     email_alerts: {
       enabled: false,
       recipient: '',
@@ -32,7 +31,7 @@ function App() {
   const [showZoneSelector, setShowZoneSelector] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState('monitor'); // monitor, config, logs
+  const [activeTab, setActiveTab] = useState('monitor');
 
   useEffect(() => {
     const loadConfig = async () => {
@@ -40,28 +39,22 @@ function App() {
       if (result.success) {
         setConfig(result.data);
 
-        // Check for stored zone selection
         const storedZone = localStorage.getItem(ZONE_STORAGE_KEY);
         const storedMode = localStorage.getItem(DEVICE_MODE_STORAGE_KEY);
 
-        if (storedZone && storedMode) {
+        if (storedMode === 'dashboard') {
+          setDeviceMode('dashboard');
+          setActiveTab('logs');
+        } else if (storedMode === 'measuring' && storedZone) {
           const parsedZone = JSON.parse(storedZone);
-          // Verify the zone still exists in config
           const zoneExists = result.data.zones?.find(z => z.id === parsedZone.id);
           if (zoneExists) {
-            // Update with potentially new name from config
             setSelectedZone(zoneExists);
-            setDeviceMode(storedMode);
-            // Set appropriate default tab based on mode
-            if (storedMode === 'dashboard') {
-              setActiveTab('logs');
-            }
+            setDeviceMode('measuring');
           } else {
-            // Zone no longer exists, show selector
             setShowZoneSelector(true);
           }
         } else {
-          // First time or missing mode, show zone selector
           setShowZoneSelector(true);
         }
       } else {
@@ -74,7 +67,7 @@ function App() {
     loadConfig();
   }, []);
 
-  // Update selected zone when config changes (in case zone name was updated)
+  // Update selected zone name if config changes
   useEffect(() => {
     if (selectedZone && config.zones?.length > 0) {
       const updatedZone = config.zones.find(z => z.id === selectedZone.id);
@@ -87,14 +80,17 @@ function App() {
 
   const handleZoneSelect = (zone) => {
     setSelectedZone(zone);
-    localStorage.setItem(ZONE_STORAGE_KEY, JSON.stringify(zone));
+    if (zone) {
+      localStorage.setItem(ZONE_STORAGE_KEY, JSON.stringify(zone));
+    } else {
+      localStorage.removeItem(ZONE_STORAGE_KEY);
+    }
   };
 
   const handleDeviceModeSelect = (mode) => {
     setDeviceMode(mode);
     localStorage.setItem(DEVICE_MODE_STORAGE_KEY, mode);
     setShowZoneSelector(false);
-    // Set appropriate default tab based on mode
     if (mode === 'dashboard') {
       setActiveTab('logs');
     } else {
@@ -136,7 +132,6 @@ function App() {
     );
   }
 
-  // Show zone selector if needed
   if (showZoneSelector && config.zones?.length > 0) {
     return (
       <ZoneSelector
@@ -154,13 +149,17 @@ function App() {
           Sound Meter
         </h1>
 
-        {/* Zone and Mode Indicator */}
-        {selectedZone && (
+        {/* Mode / Zone Indicator */}
+        {deviceMode && (
           <div className="flex justify-center mb-6">
             <div className="bg-white rounded-lg shadow px-4 py-2 flex items-center gap-3">
-              <span className="text-gray-600">Zone:</span>
-              <span className="font-semibold text-blue-600">{selectedZone.name}</span>
-              <span className="text-gray-300">|</span>
+              {selectedZone && deviceMode === 'measuring' && (
+                <>
+                  <span className="text-gray-600">Zone:</span>
+                  <span className="font-semibold text-blue-600">{selectedZone.name}</span>
+                  <span className="text-gray-300">|</span>
+                </>
+              )}
               <span className="text-gray-600">Mode:</span>
               <span className={`font-semibold ${deviceMode === 'measuring' ? 'text-green-600' : 'text-purple-600'}`}>
                 {deviceMode === 'measuring' ? 'Measuring' : 'Dashboard'}
@@ -175,51 +174,41 @@ function App() {
           </div>
         )}
 
-        {/* Tab Navigation */}
-        <div className="flex justify-center mb-8 gap-4">
-          {deviceMode === 'measuring' && (
+        {/* Tab Navigation — dashboard only */}
+        {deviceMode === 'dashboard' && (
+          <div className="flex justify-center mb-8 gap-4">
             <button
-              onClick={() => setActiveTab('monitor')}
+              onClick={() => setActiveTab('config')}
               className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
-                activeTab === 'monitor'
+                activeTab === 'config'
                   ? 'bg-asv-blue text-white'
                   : 'bg-white text-gray-700 hover:bg-gray-100'
               }`}
             >
-              Monitor
+              Configuration
             </button>
-          )}
-          <button
-            onClick={() => setActiveTab('config')}
-            className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
-              activeTab === 'config'
-                ? 'bg-asv-blue text-white'
-                : 'bg-white text-gray-700 hover:bg-gray-100'
-            }`}
-          >
-            Configuration
-          </button>
-          <button
-            onClick={() => setActiveTab('logs')}
-            className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
-              activeTab === 'logs'
-                ? 'bg-asv-blue text-white'
-                : 'bg-white text-gray-700 hover:bg-gray-100'
-            }`}
-          >
-            Logs
-          </button>
-          <button
-            onClick={() => setActiveTab('trends')}
-            className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
-              activeTab === 'trends'
-                ? 'bg-asv-blue text-white'
-                : 'bg-white text-gray-700 hover:bg-gray-100'
-            }`}
-          >
-            Trends
-          </button>
-        </div>
+            <button
+              onClick={() => setActiveTab('logs')}
+              className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
+                activeTab === 'logs'
+                  ? 'bg-asv-blue text-white'
+                  : 'bg-white text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              Logs
+            </button>
+            <button
+              onClick={() => setActiveTab('trends')}
+              className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
+                activeTab === 'trends'
+                  ? 'bg-asv-blue text-white'
+                  : 'bg-white text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              Trends
+            </button>
+          </div>
+        )}
 
         {error && (
           <div className="max-w-md mx-auto mb-8 bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-lg">
@@ -229,22 +218,21 @@ function App() {
 
         {/* Tab Content */}
         <div className="flex justify-center">
-          {activeTab === 'monitor' && deviceMode === 'measuring' && (
-            <SoundMeter config={config} onLogSave={handleLogSave} />
+          {deviceMode === 'measuring' && (
+            <SoundMeter config={config} onLogSave={handleLogSave} selectedZone={selectedZone} />
           )}
-          {activeTab === 'config' && (
+          {activeTab === 'config' && deviceMode === 'dashboard' && (
             <ConfigPanel config={config} onConfigUpdate={handleConfigUpdate} />
           )}
-          {activeTab === 'logs' && (
+          {activeTab === 'logs' && deviceMode === 'dashboard' && (
             <LogsViewer config={config} />
           )}
-          {activeTab === 'trends' && (
+          {activeTab === 'trends' && deviceMode === 'dashboard' && (
             <TrendsView config={config} />
           )}
         </div>
       </div>
 
-      {/* Footer with School Logo */}
       <footer className="bg-asv-blue py-4">
         <div className="container mx-auto px-4 flex justify-center">
           <img
